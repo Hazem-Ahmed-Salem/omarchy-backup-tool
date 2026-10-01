@@ -62,70 +62,75 @@ The backup repository maintains an audited, clean structure outside `~/.config`:
 
 ---
 
-## CLI Usage
+## Usage
+
+`omarchy-backup` requires zero external dependencies and runs directly out of the box using Python's standard library. No installation or `pip` setup is needed.
+
+From the repository root, run commands using the `./omarchy-backup` script runner:
 
 ### 1. Initialize Configuration & Git Remote
 ```bash
-omarchy-backup init
-# or non-interactive:
-omarchy-backup init --dir ~/omarchy-config-backup --remote git@github.com:user/omarchy-config.git --branch main
+./omarchy-backup init
+
+# Or non-interactive:
+./omarchy-backup init --dir ~/omarchy-config-backup --remote git@github.com:user/omarchy-config.git --branch main
 ```
 
 ### 2. Read-Only Scan
-Inspect discovered Hyprland configs, Omarchy settings, shell plugins, packages, and hardware without touching anything:
+Inspect discovered Hyprland configs, Omarchy settings, shell plugins, packages, and hardware without modifying anything:
 ```bash
-omarchy-backup scan
+./omarchy-backup scan
 ```
 
 ### 3. Back Up Configuration
 Collect configuration files, calculate checksums, verify secrets, and commit to the Git repository:
 ```bash
-omarchy-backup backup
+./omarchy-backup backup
 
 # Optional: commit and push immediately to GitHub:
-omarchy-backup backup --push -m "backup: updated custom bindings"
+./omarchy-backup backup --push -m "backup: updated custom bindings"
 ```
 
 ### 4. Check Status & Diff
 Compare your live system configuration against the backup repository:
 ```bash
 # View summary of modified, missing, or untracked files
-omarchy-backup status
+./omarchy-backup status
 
 # View unified diff for modified files
-omarchy-backup diff
+./omarchy-backup diff
 ```
 
 ### 5. Inspect History
 ```bash
-omarchy-backup history
+./omarchy-backup history
 ```
 
 ### 6. Restore Configuration
 ```bash
 # Preview what would change without modifying files:
-omarchy-backup restore --dry-run
+./omarchy-backup restore --dry-run
 
 # Interactive restore:
-omarchy-backup restore
+./omarchy-backup restore
 
 # Unattended restore (e.g. fresh machine setup):
-omarchy-backup restore --yes
+./omarchy-backup restore --yes
 
 # Restore including machine-specific hardware (monitors):
-omarchy-backup restore --include-local
+./omarchy-backup restore --include-local
 ```
 
 ### 7. Emergency Rollback
 If you ever want to revert your configurations to the state prior to the last restore:
 ```bash
-omarchy-backup rollback
+./omarchy-backup rollback
 ```
 
 ### 8. Push / Pull
 ```bash
-omarchy-backup push
-omarchy-backup pull
+./omarchy-backup push
+./omarchy-backup pull
 ```
 
 ---

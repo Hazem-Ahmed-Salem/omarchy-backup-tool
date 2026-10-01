@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Standalone runner for omarchy-backup without requiring pip installation
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export PYTHONPATH="${SCRIPT_DIR}/src:${PYTHONPATH}"
+
+exec python3 -m omarchy_backup.cli "$@"
