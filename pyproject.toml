@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "omarchy-backup"
+version = "1.0.0"
+description = "Production-quality configuration backup and restore CLI for Omarchy 4.x and Hyprland"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "Omarchy Backup Contributors" }
+]
+keywords = ["omarchy", "hyprland", "backup", "restore", "dotfiles", "quickshell"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: System :: Archiving :: Backup",
+]
+
+[project.scripts]
+omarchy-backup = "omarchy_backup.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
