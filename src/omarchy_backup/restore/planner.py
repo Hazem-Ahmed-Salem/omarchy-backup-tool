@@ -182,6 +182,26 @@ def plan_restore(
         except Exception:
             pass
 
+    hyprpm_plugins_file = backup_dir / "plugins" / "hyprpm.json"
+    if hyprpm_plugins_file.is_file():
+        try:
+            with open(hyprpm_plugins_file, "r", encoding="utf-8") as f:
+                h_list = json.load(f)
+            for hl in h_list:
+                hname = hl.get("name") or hl.get("id") or hl.get("repository", "")
+                hrepo = hl.get("repository")
+                if hrepo:
+                    actions.append(
+                        RestoreAction(
+                            action_type=ActionType.INSTALL_PLUGIN,
+                            target=f"Hyprland: {hname}",
+                            details=hrepo,
+                        )
+                    )
+                    has_plugins = True
+        except Exception:
+            pass
+
     # 3. Service notifications/reloads
     if has_hypr:
         actions.append(

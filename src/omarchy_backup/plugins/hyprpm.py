@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from omarchy_backup.plugins.prompt import PluginPromptHandler
 from omarchy_backup.runner import CommandRunner, default_runner
 
 logger = logging.getLogger(__name__)
@@ -13,9 +14,12 @@ logger = logging.getLogger(__name__)
 def restore_hyprpm_plugins(
     recorded_plugins: list[dict[str, Any]],
     runner: CommandRunner | None = None,
+    auto_confirm: bool = False,
+    prompt_handler: PluginPromptHandler | None = None,
 ) -> tuple[list[str], list[str]]:
     """Restore hyprpm plugins safely using non-interactive command execution."""
     r = runner or default_runner
+    prompter = prompt_handler or PluginPromptHandler(auto_confirm=auto_confirm)
     actions: list[str] = []
     warnings: list[str] = []
 
@@ -35,6 +39,10 @@ def restore_hyprpm_plugins(
         revision = plugin.get("revision", "")
 
         if not repo:
+            continue
+
+        if not prompter.should_install("Hyprland", name or repo, repo):
+            actions.append(f"Skipped Hyprland plugin {name or repo} (user opted not to install)")
             continue
 
         add_cmd = ["hyprpm", "add", repo]

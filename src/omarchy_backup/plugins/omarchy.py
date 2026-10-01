@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from omarchy_backup.paths import AppPaths, default_paths
+from omarchy_backup.plugins.prompt import PluginPromptHandler
 from omarchy_backup.runner import CommandRunner, default_runner
 
 logger = logging.getLogger(__name__)
@@ -19,13 +20,16 @@ def restore_omarchy_plugins(
     runner: CommandRunner | None = None,
     auto_confirm: bool = False,
     reproducible: bool = False,
+    prompt_handler: PluginPromptHandler | None = None,
 ) -> tuple[list[str], list[str]]:
     """Install missing Omarchy shell plugins and restore enabled state.
 
+    Prompts for user confirmation one by one unless auto_confirm is True.
     Returns (actions_taken, warnings).
     """
     p = paths or default_paths
     r = runner or default_runner
+    prompter = prompt_handler or PluginPromptHandler(auto_confirm=auto_confirm)
     actions: list[str] = []
     warnings: list[str] = []
 
@@ -62,12 +66,15 @@ def restore_omarchy_plugins(
 
         # Case 1: Plugin is missing and has repository URL
         if pid not in installed_ids and repo:
+            if not prompter.should_install("Omarchy shell", pid or repo, repo):
+                actions.append(f"Skipped Omarchy plugin {pid or repo} (user opted not to install)")
+                continue
+
             logger.info("Installing missing Omarchy plugin '%s' from %s", pid or repo, repo)
             cmd = ["omarchy", "plugin", "add", repo]
             if enabled:
                 cmd.append("--enable")
-            if auto_confirm:
-                cmd.append("--yes")
+            cmd.append("--yes")
 
             res = r.run(cmd, timeout=60.0)
             if res.success:

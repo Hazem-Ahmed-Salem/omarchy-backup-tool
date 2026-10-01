@@ -10,14 +10,13 @@ import tempfile
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from omarchy_backup.backup.checksum import calculate_sha256
 from omarchy_backup.backup.snapshot import create_pre_restore_snapshot
 from omarchy_backup.manifest import Manifest, ManifestEntry
 from omarchy_backup.paths import AppPaths, default_paths
-from omarchy_backup.plugins.hyprpm import restore_hyprpm_plugins
-from omarchy_backup.plugins.omarchy import restore_omarchy_plugins
+from omarchy_backup.plugins import PluginPromptHandler, restore_hyprpm_plugins, restore_omarchy_plugins
 from omarchy_backup.restore.planner import ActionType, RestorePlan, plan_restore
 from omarchy_backup.restore.rollback import rollback_snapshot
 from omarchy_backup.restore.validator import check_compatibility, validate_live_system
@@ -58,6 +57,7 @@ class RestoreEngine:
         auto_confirm: bool = False,
         reproducible_plugins: bool = False,
         skip_service_reload: bool = False,
+        prompt_fn: Callable[[str], str] | None = None,
     ) -> RestoreExecutionResult:
         """Run the full restore pipeline with pre-restore snapshot and rollback guard."""
         manifest_file = backup_dir / "manifest.json"
@@ -145,6 +145,9 @@ class RestoreEngine:
 
         # 6. Restore plugins
         plugin_actions: list[str] = []
+        prompt_handler = PluginPromptHandler(auto_confirm=auto_confirm, prompt_fn=prompt_fn)
+
+        # 6a. Omarchy shell plugins
         omarchy_plugins_file = backup_dir / "plugins" / "omarchy-shell.json"
         if omarchy_plugins_file.is_file():
             try:
@@ -156,11 +159,29 @@ class RestoreEngine:
                     runner=self.runner,
                     auto_confirm=auto_confirm,
                     reproducible=reproducible_plugins,
+                    prompt_handler=prompt_handler,
                 )
                 plugin_actions.extend(p_acts)
                 warnings.extend(p_warns)
             except Exception as exc:
                 warnings.append(f"Plugin restore error: {exc}")
+
+        # 6b. Hyprland plugins (hyprpm)
+        hyprpm_plugins_file = backup_dir / "plugins" / "hyprpm.json"
+        if hyprpm_plugins_file.is_file():
+            try:
+                with open(hyprpm_plugins_file, "r", encoding="utf-8") as f:
+                    rec_hypr = json.load(f)
+                h_acts, h_warns = restore_hyprpm_plugins(
+                    recorded_plugins=rec_hypr,
+                    runner=self.runner,
+                    auto_confirm=auto_confirm,
+                    prompt_handler=prompt_handler,
+                )
+                plugin_actions.extend(h_acts)
+                warnings.extend(h_warns)
+            except Exception as exc:
+                warnings.append(f"Hyprland plugin restore error: {exc}")
 
         # 7. Reload and validate system
         service_actions: list[str] = []
